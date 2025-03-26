@@ -58,4 +58,4 @@ def compose_video(voiceover_path, graphic_path, background_path, output_name="fi
 
     graphic.write_videofile(str(output_path)/ output_name.replace(".mp4", ".avi"))
 
-    return str(output_path) sd
+    return str(output_path) s
