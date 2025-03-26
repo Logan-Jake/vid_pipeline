@@ -22,6 +22,8 @@ if __name__ == "__main__":
     voice_path = generate_voiceover(story['text'] or story['title'])
     print(f"🎤 Voiceover saved to: {voice_path}")
 
+    print('1')
+
     # Generate graphic
     graphic_path = generate_post_bubble(
         title=story['title'],
@@ -31,6 +33,8 @@ if __name__ == "__main__":
         awards=story['awards']
     )
     print(f"🖼 Graphic saved to: {graphic_path}")
+
+    print('2')
 
     # Select background + filename
     bg_path = get_random_background()
@@ -44,3 +48,5 @@ if __name__ == "__main__":
         output_name=filename
     )
     print(f"🎬 Final video saved to: {final_path}")
+
+    print('3')

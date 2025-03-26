@@ -4,6 +4,16 @@ import textwrap
 import requests
 from io import BytesIO
 
+
+def round_image(img, radius):
+    mask = Image.new("L", img.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
+    rounded = Image.new("RGBA", img.size)
+    rounded.paste(img, (0, 0), mask=mask)
+    return rounded
+
+
 def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], filename="reddit_bubble.png"):
     WIDTH, HEIGHT = 1080, 400
     BG_COLOUR = (255, 255, 255, 230)
@@ -34,14 +44,6 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
             content_type = response.headers.get("Content-Type", "")
             if "image" in content_type:
                 pfp = Image.open(BytesIO(response.content)).resize((64, 64)).convert("RGBA")
-
-                def round_image(img, radius):
-                    mask = Image.new("L", img.size, 0)
-                    draw = ImageDraw.Draw(mask)
-                    draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
-                    rounded = Image.new("RGBA", img.size)
-                    rounded.paste(img, (0, 0), mask=mask)
-                    return rounded
 
                 rounded_pfp = round_image(pfp, radius=60)
                 img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
@@ -84,5 +86,6 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     # Audio bar (optional)
     draw.text((WIDTH - 180, 40), "🔊 ▂▃▄▅▆▇", fill=ACCENT, font=font_meta)
 
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
     return str(output_path)
