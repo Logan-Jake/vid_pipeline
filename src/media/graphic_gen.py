@@ -3,8 +3,14 @@ from pathlib import Path
 import textwrap
 import requests
 from io import BytesIO
+import unicodedata
 
+
+def clean_text(text):
+    return ''.join(c for c in text if unicodedata.category(c)[0] != 'C')
 def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], filename="reddit_bubble.png"):
+    title = clean_text(title)
+    author = clean_text(author)
     WIDTH, HEIGHT = 1080, 400
     BG_COLOUR = (255, 255, 255, 230)
     TEXT_COLOUR = (0, 0, 0)
@@ -15,9 +21,15 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     draw = ImageDraw.Draw(img)
 
     # Fonts
-    font_user = ImageFont.truetype("arial.ttf", 36)
-    font_title = ImageFont.truetype("arial.ttf", 48)
-    font_meta = ImageFont.truetype("arial.ttf", 28)
+    def safe_font(font_name, size):
+        try:
+            return ImageFont.truetype(font_name, size)
+        except IOError:
+            return ImageFont.load_default()
+
+    font_user = safe_font("arial.ttf", 36)
+    font_title = safe_font("arial.ttf", 48)
+    font_meta = safe_font("arial.ttf", 28)
 
     # Rounded rectangle background
     radius = 40
@@ -31,9 +43,34 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
             response = requests.get(profile_pic_url, headers=headers, timeout=5)
             response.raise_for_status()
 
+            print("🔽 Downloading profile picture:", profile_pic_url)
+            print("📦 Content-Length:", len(response.content))
+            print("📄 Content-Type:", response.headers.get("Content-Type"))
+
             content_type = response.headers.get("Content-Type", "")
             if "image" in content_type:
-                pfp = Image.open(BytesIO(response.content)).resize((64, 64)).convert("RGBA")
+                #pfp = Image.open(BytesIO(response.content)).resize((64, 64)).convert("RGBA")
+                try:
+                    image_data = BytesIO(response.content)
+                    test_img = Image.open(image_data)
+                    test_img.verify()  # Validate
+                    image_data.seek(0)  # Rewind for actual use
+
+                    pfp = Image.open(image_data).convert("RGBA").resize((64, 64))
+
+                    def round_image(img, radius):
+                        mask = Image.new("L", img.size, 0)
+                        draw = ImageDraw.Draw(mask)
+                        draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
+                        rounded = Image.new("RGBA", img.size)
+                        rounded.paste(img, (0, 0), mask=mask)
+                        return rounded
+
+                    rounded_pfp = round_image(pfp, radius=60)
+                    img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
+
+                except Exception as e:
+                    print("🚫 Failed to load profile pic (safe mode):", e)
 
                 def round_image(img, radius):
                     mask = Image.new("L", img.size, 0)
@@ -61,6 +98,12 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     tick_x = name_x + len(author) * 18 + 16
     img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
 
+    if tick_path.exists():
+        tick_icon = Image.open(tick_path).resize((24, 24)).convert("RGBA")
+        img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
+    else:
+        print("⚠️ Blue tick icon missing:", tick_path)
+
     # Title text (wrapped)
     wrapped = textwrap.fill(title, width=40)
     draw.text((40, 120), wrapped, fill=TEXT_COLOUR, font=font_title)
@@ -87,3 +130,5 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
     return str(output_path)
+
+
