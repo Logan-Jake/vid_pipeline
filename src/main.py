@@ -22,17 +22,18 @@ if __name__ == "__main__":
     voice_path = generate_voiceover(story['text'] or story['title'])
     print(f"🎤 Voiceover saved to: {voice_path}")
 
-    print('1')
+    #input("Press ENTER to continue to GRAPHIC generation...")
 
     # Generate graphic
-    graphic_path = generate_post_bubble(
-        title=story['title'],
-        author=story['author'],
-        score=story['score'],
-        profile_pic_url=story['profile_pic_url'],
-        awards=story['awards']
-    )
-    print(f"🖼 Graphic saved to: {graphic_path}")
+    # graphic_path = generate_post_bubble(
+    #    title=story['title'],
+    #    author=story['author'],
+    #    score=story['score'],
+    #    profile_pic_url=story['profile_pic_url'],
+    #    awards=story['awards']
+    # )
+    # print(f"🖼 Graphic saved to: {graphic_path}")
+
 
     print('2')
 
@@ -43,10 +44,11 @@ if __name__ == "__main__":
     # Compose final video
     final_path = compose_video(
         voiceover_path=voice_path,
-        graphic_path=graphic_path,
+        graphic_path="media/output/blue_tick.png",#graphic_path,
         background_path=bg_path,
         output_name=filename
     )
     print(f"🎬 Final video saved to: {final_path}")
 
     print('3')
+

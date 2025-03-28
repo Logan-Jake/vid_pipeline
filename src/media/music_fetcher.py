@@ -1,8 +1,9 @@
+
 import requests
 import random
 from pathlib import Path
-from moviepy.editor import AudioFileClip
-
+from moviepy.audio.io.AudioFileClip import AudioFileClip
+from media.music_utils import get_random_music
 
 def download_random_track() -> AudioFileClip:
     # Sample Pixabay track URLs (rotate these or scrape more later)
@@ -13,11 +14,19 @@ def download_random_track() -> AudioFileClip:
     ]
     url = random.choice(tracks)
 
-    response = requests.get(url)
-    response.raise_for_status()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    }
 
-    temp_path = Path("output") / "temp_music.mp3"
-    with open(temp_path, "wb") as f:
-        f.write(response.content)
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
 
-    return AudioFileClip(str(temp_path))
+        temp_path = Path("output") / "temp_music.mp3"
+        with open(temp_path, "wb") as f:
+            f.write(response.content)
+
+        return AudioFileClip(str(temp_path))
+    except Exception as e:
+        print("⚠️ Failed to download music:", e)
+        return get_random_music()
