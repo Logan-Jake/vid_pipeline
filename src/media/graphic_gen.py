@@ -4,6 +4,7 @@ import textwrap
 import requests
 from io import BytesIO
 import unicodedata
+import sys
 
 
 def clean_text(text):
@@ -24,7 +25,8 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     def safe_font(font_name, size):
         try:
             return ImageFont.truetype(font_name, size)
-        except IOError:
+        except Exception as e:
+            print(f"⚠️ Font fallback: {font_name} failed ({e}), using default.")
             return ImageFont.load_default()
 
     font_user = safe_font("arial.ttf", 36)
@@ -34,6 +36,14 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     # Rounded rectangle background
     radius = 40
     draw.rounded_rectangle([0, 0, WIDTH, HEIGHT], radius=radius, fill=BG_COLOUR)
+
+    def round_image(img, radius):
+        mask = Image.new("L", img.size, 0)
+        draw = ImageDraw.Draw(mask)
+        draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
+        rounded = Image.new("RGBA", img.size)
+        rounded.paste(img, (0, 0), mask=mask)
+        return rounded
 
     # Profile Picture
     pfp_x, pfp_y = 40, 30
@@ -58,48 +68,35 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
 
                     pfp = Image.open(image_data).convert("RGBA").resize((64, 64))
 
-                    def round_image(img, radius):
-                        mask = Image.new("L", img.size, 0)
-                        draw = ImageDraw.Draw(mask)
-                        draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
-                        rounded = Image.new("RGBA", img.size)
-                        rounded.paste(img, (0, 0), mask=mask)
-                        return rounded
-
                     rounded_pfp = round_image(pfp, radius=60)
                     img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
 
                 except Exception as e:
                     print("🚫 Failed to load profile pic (safe mode):", e)
 
-                def round_image(img, radius):
-                    mask = Image.new("L", img.size, 0)
-                    draw = ImageDraw.Draw(mask)
-                    draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
-                    rounded = Image.new("RGBA", img.size)
-                    rounded.paste(img, (0, 0), mask=mask)
-                    return rounded
-
-                rounded_pfp = round_image(pfp, radius=60)
-                img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
+                # rounded_pfp = round_image(pfp, radius=60)
+                # img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
             else:
                 print("⚠️ Profile URL didn't return an image:", content_type)
 
         except Exception as e:
             print("🚫 Failed to load profile pic:", e)
-
+    print('1')
     # Username + Blue Tick
     name_x = pfp_x + 80
-    draw.text((name_x, pfp_y + 10), f"u/{author}", fill=ACCENT, font=font_user)
+    try:
+        draw.text((name_x, pfp_y + 10), f"u/{author}", fill=ACCENT, font=font_user)
+        print("✅ Username drawn")
+    except Exception as e:
+        print("🚫 Failed to draw username:", e)
+        sys.stdout.flush()
 
+    print('2')
     # Blue tick
     tick_path = Path(__file__).parent.parent / "assets" / "blue_tick.png"
-    tick_icon = Image.open(tick_path).resize((24, 24)).convert("RGBA")
-    tick_x = name_x + len(author) * 18 + 16
-    img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
-
     if tick_path.exists():
         tick_icon = Image.open(tick_path).resize((24, 24)).convert("RGBA")
+        tick_x = name_x + len(author) * 18 + 16
         img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
     else:
         print("⚠️ Blue tick icon missing:", tick_path)
@@ -111,14 +108,18 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     # Awards
     x = 40
     y = HEIGHT - 100
-    for award in awards[:5]:  # Show up to 5 awards
+    for award in awards[:5]:
         try:
-            r = requests.get(award["icon_url"])
+            icon_url = award.get("icon_url")
+            if not icon_url:
+                continue
+            r = requests.get(icon_url)
+            r.raise_for_status()
             icon = Image.open(BytesIO(r.content)).resize((48, 48)).convert("RGBA")
             img.paste(icon, (x, y), mask=icon)
             x += 56
         except Exception as e:
-            print(f"Failed to load award {award['name']}: {e}")
+            print(f"⚠️ Failed to load award icon: {e}")
 
     # Likes / Comments / Shares
     meta_text = "❤️ 999+    💬 999+    🔁 999+"
@@ -129,6 +130,13 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
-    return str(output_path)
+    return output_path.as_posix()
 
 
+generate_post_bubble(
+    title="This is a test title",
+    author="testuser",
+    score=123,
+    profile_pic_url="https://example.com/profile.png",
+    awards=[]
+)
