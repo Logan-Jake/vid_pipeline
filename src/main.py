@@ -18,37 +18,54 @@ if __name__ == "__main__":
     print(story['text'])
     print("🖼 Profile Pic URL:", story['profile_pic_url'])
 
+    print('1')
+
+    print(story)
+    print("Keys in story:", list(story.keys()))
+
+    print("Title:", story['title'], type(story['title']))
+    print("Author:", story['author'], type(story['author']))
+    print("Score:", story['score'], type(story['score']))
+    print("Profile Pic URL:", story['profile_pic_url'], type(story['profile_pic_url']))
+    print("Awards:", story['awards'], type(story['awards']))
+
+    try:
+        # Generate graphic
+        graphic_path = generate_post_bubble(
+            title=story['title'],
+            author=story['author'],
+            score=story['score'],
+            profile_pic_url=story['profile_pic_url'],
+            awards=story['awards']
+        )
+        print(f"🖼 Graphic saved to: {graphic_path}")
+    except Exception as e:
+        print("❌ Error generating graphic:")
+        import traceback
+
+        traceback.print_exc()
+
+    print('2')
+
     # Generate voiceover
     voice_path = generate_voiceover(story['text'] or story['title'])
     print(f"🎤 Voiceover saved to: {voice_path}")
 
-    #input("Press ENTER to continue to GRAPHIC generation...")
-
-    # Generate graphic
-    # graphic_path = generate_post_bubble(
-    #    title=story['title'],
-    #    author=story['author'],
-    #    score=story['score'],
-    #    profile_pic_url=story['profile_pic_url'],
-    #    awards=story['awards']
-    # )
-    # print(f"🖼 Graphic saved to: {graphic_path}")
-
-
-    print('2')
+    print('3')
 
     # Select background + filename
     bg_path = get_random_background()
     filename = get_next_video_filename()
 
+    print('4')
     # Compose final video
     final_path = compose_video(
         voiceover_path=voice_path,
-        graphic_path="media/output/blue_tick.png",#graphic_path,
+        graphic_path=graphic_path,
         background_path=bg_path,
         output_name=filename
     )
     print(f"🎬 Final video saved to: {final_path}")
 
-    print('3')
+    print('5')
 

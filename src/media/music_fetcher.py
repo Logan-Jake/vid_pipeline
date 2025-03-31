@@ -19,14 +19,16 @@ def download_random_track() -> AudioFileClip:
     }
 
     try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        return get_random_music()
 
-        temp_path = Path("output") / "temp_music.mp3"
-        with open(temp_path, "wb") as f:
-            f.write(response.content)
-
-        return AudioFileClip(str(temp_path))
+        # response = requests.get(url, headers=headers)
+        # response.raise_for_status()
+        #
+        # temp_path = Path("output") / "temp_music.mp3"
+        # with open(temp_path, "wb") as f:
+        #     f.write(response.content)
+        #
+        # return AudioFileClip(str(temp_path))
     except Exception as e:
         print("⚠️ Failed to download music:", e)
         return get_random_music()
