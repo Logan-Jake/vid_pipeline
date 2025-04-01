@@ -4,7 +4,6 @@ from moviepy.audio.AudioClip import CompositeAudioClip
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip as CompositeClip
 from moviepy.video.VideoClip import ImageClip
 from media.music_fetcher import download_random_track
-from media.music_utils import get_random_music
 from pathlib import Path
 
 
@@ -23,37 +22,38 @@ def get_next_video_filename(folder: str = "output", prefix: str = "video_", ext:
     return f"{prefix}{last_num + 1:03d}{ext}"
 
 
-def compose_video(voiceover_path: str, graphic_path: str, background_path: str, output_name: str = "final_video.avi") -> str:
+def compose_video(voiceover_path: str, graphic_path: str, background_path: str, output_name: str = None) -> str:
+    if output_name is None:
+        output_name = get_next_video_filename()
+
     output_path = Path(__file__).parent / "output" / output_name
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Load audio and background video
+    # Load main clips
     audio = AudioFileClip(voiceover_path)
     bg_video = VideoFileClip(background_path).resized((1080, 1920)).subclipped(0, audio.duration)
 
-    # Optional music (currently commented out)
-    try:
-        music = download_random_track()
-    except Exception as e:
-        print("⚠️ Failed to download music, falling back to local:", e)
-        music_path = get_random_music()
-        music = AudioFileClip(music_path)
 
-    if music is None:
-        raise RuntimeError("No music could be loaded.")
-
-    # Adjust music volume and combine audio tracks
-    music = music.subclipped(0, audio.duration).max_volume(0.1)
+    # Load music
+    music = download_random_track()#.subclipped(0, audio.duration).max_volume(0.1)
+    print("🎧 audio:", type(audio))
+    print("🎵 music:", type(music))
     mixed_audio = CompositeAudioClip([audio, music])
-    bg_video = bg_video.set_audio(mixed_audio)
+    bg_video = bg_video.with_audio(mixed_audio)
 
-    # Load overlay graphic
+    # Load overlay
     graphic = ImageClip(graphic_path).with_duration(audio.duration).resized(width=900).with_position(("center", "top"))
 
-    # Combine video and overlay
     final = CompositeClip([bg_video, graphic])
+    # final.write_videofile(str(output_path), codec="libx264", audio_codec="aac",threads=4) # better qualty
 
-    # Write the output video
-    final.write_videofile(str(output_path), codec="libx264", audio_codec="aac")
+    final.write_videofile( #faster for testing
+        str(output_path),
+        codec="libx264",
+        audio_codec="aac",
+        preset="ultrafast",
+        bitrate="3000k",
+        threads=8
+    )
 
     return str(output_path)

@@ -131,12 +131,3 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
     return output_path.as_posix()
-
-
-generate_post_bubble(
-    title="This is a test title",
-    author="testuser",
-    score=123,
-    profile_pic_url="https://example.com/profile.png",
-    awards=[]
-)
