@@ -12,6 +12,5 @@ def get_random_music() -> str:
     return str(random.choice(tracks))
 
 
-get_random_music()
-
+# get_random_music()
 

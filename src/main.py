@@ -1,7 +1,7 @@
 from reddit.fetcher import fetch_top_story
 from media.tts import generate_voiceover
 from media.graphic_gen import generate_post_bubble
-from media.composer import get_next_video_filename
+from media.get_output_filename import get_next_video_filename
 from media.audio_mixer import mix_audio_tracks  # ⬅️ added mix_audio_tracks
 from media.footage_finder import get_random_background
 from media.music_fetcher import download_random_track  # ⬅️ needed for music
@@ -66,6 +66,11 @@ if __name__ == "__main__":
     # Step 1: Mix voiceover + music into MP3
     mix_audio_tracks(voice_path, music_path, final_audio_path)
 
+    print("🔍 Validating FFmpeg inputs:")
+    print(" - Background video exists:", Path(bg_path).exists(), bg_path)
+    print(" - Overlay graphic exists:", Path(graphic_path).exists(), graphic_path)
+    print(" - Final audio exists:", Path(final_audio_path).exists(), final_audio_path)
+
     # Step 2: Use FFmpeg to overlay graphic and add audio
     final_path = f"output/{filename}"
     ffmpeg_compose_video(
@@ -75,9 +80,8 @@ if __name__ == "__main__":
         output_path=final_path
     )
 
-    print("🧪 Validating FFmpeg inputs:")
-    print("   - Background video exists:", Path(bg_path).exists(), bg_path)
-    print("   - Overlay graphic exists:", Path(graphic_path).exists(), graphic_path)
-    print("   - Final audio exists:", Path(final_audio_path).exists(), final_audio_path)
 
     print(f"🎬 Final video saved to: {final_path}")
+
+
+
