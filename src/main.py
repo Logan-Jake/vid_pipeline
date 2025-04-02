@@ -7,6 +7,7 @@ from media.footage_finder import get_random_background
 from media.music_fetcher import download_random_track  # ⬅️ needed for music
 from media.ffmpeg_pipeline import ffmpeg_compose_video  # ⬅️ new FFmpeg final step
 from pathlib import Path
+import os
 
 if __name__ == "__main__":
     story = fetch_top_story()
@@ -45,20 +46,6 @@ if __name__ == "__main__":
     bg_path = get_random_background()
     filename = get_next_video_filename()
 
-    # 🔁 OLD (slow) MoviePy rendering — kept for reference
-    # from media.composer import compose_video
-    # final_path = compose_video(
-    #     voiceover_path=voice_path,
-    #     graphic_path=graphic_path,
-    #     background_path=bg_path,
-    #     output_name=filename
-    # )
-    # print(f"🎬 Final video saved to: {final_path}")
-
-    # ✅ NEW FFmpeg-fast pipeline
-
-
-
     final_audio_path = "output/final_audio.mp3"
     music_clip = download_random_track()
     music_path = music_clip.filename if hasattr(music_clip, "filename") else music_clip
@@ -83,5 +70,12 @@ if __name__ == "__main__":
 
     print(f"🎬 Final video saved to: {final_path}")
 
+    try:
+        os.remove(voice_path)
+        os.remove(graphic_path)
+        os.remove(final_audio_path)
+        print("🧹 Cleaned up temporary files.")
+    except Exception as e:
+        print("⚠️ Failed to delete some temporary files:", e)
 
 
