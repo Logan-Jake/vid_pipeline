@@ -1,8 +1,12 @@
 from reddit.fetcher import fetch_top_story
 from media.tts import generate_voiceover
 from media.graphic_gen import generate_post_bubble
-from media.composer import compose_video, get_next_video_filename
+from media.composer import get_next_video_filename
+from media.audio_mixer import mix_audio_tracks  # ⬅️ added mix_audio_tracks
 from media.footage_finder import get_random_background
+from media.music_fetcher import download_random_track  # ⬅️ needed for music
+from media.ffmpeg_pipeline import ffmpeg_compose_video  # ⬅️ new FFmpeg final step
+from pathlib import Path
 
 if __name__ == "__main__":
     story = fetch_top_story()
@@ -31,7 +35,6 @@ if __name__ == "__main__":
     except Exception as e:
         print("❌ Error generating graphic:")
         import traceback
-
         traceback.print_exc()
 
     # Generate voiceover
@@ -42,12 +45,39 @@ if __name__ == "__main__":
     bg_path = get_random_background()
     filename = get_next_video_filename()
 
-    # Compose final video
-    final_path = compose_video(
-        voiceover_path=voice_path,
-        graphic_path=graphic_path,
-        background_path=bg_path,
-        output_name=filename
-    )
-    print(f"🎬 Final video saved to: {final_path}")
+    # 🔁 OLD (slow) MoviePy rendering — kept for reference
+    # from media.composer import compose_video
+    # final_path = compose_video(
+    #     voiceover_path=voice_path,
+    #     graphic_path=graphic_path,
+    #     background_path=bg_path,
+    #     output_name=filename
+    # )
+    # print(f"🎬 Final video saved to: {final_path}")
 
+    # ✅ NEW FFmpeg-fast pipeline
+
+
+
+    final_audio_path = "output/final_audio.mp3"
+    music_clip = download_random_track()
+    music_path = music_clip.filename if hasattr(music_clip, "filename") else music_clip
+
+    # Step 1: Mix voiceover + music into MP3
+    mix_audio_tracks(voice_path, music_path, final_audio_path)
+
+    # Step 2: Use FFmpeg to overlay graphic and add audio
+    final_path = f"output/{filename}"
+    ffmpeg_compose_video(
+        background_path=bg_path,
+        overlay_path=graphic_path,
+        audio_path=final_audio_path,
+        output_path=final_path
+    )
+
+    print("🧪 Validating FFmpeg inputs:")
+    print("   - Background video exists:", Path(bg_path).exists(), bg_path)
+    print("   - Overlay graphic exists:", Path(graphic_path).exists(), graphic_path)
+    print("   - Final audio exists:", Path(final_audio_path).exists(), final_audio_path)
+
+    print(f"🎬 Final video saved to: {final_path}")
