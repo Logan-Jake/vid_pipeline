@@ -15,13 +15,15 @@ def ffmpeg_compose_video(background_path, overlay_path, audio_path, output_path)
     cmd = [
         ffmpeg_path,
         "-y",
-        "-i", background_path,                   # Input 0: background video
-        "-loop", "1", "-t", "5", "-i", overlay_path,  # Input 1: image as 5s video
-        "-i", audio_path,                         # Input 2: final mixed audio
-        "-filter_complex", "[0:v][1:v] overlay=(W-w)/2:50:enable='lte(t,5)'",  # overlay for first 5s
+        "-i", background_path,  # 0 - background
+        "-loop", "1", "-framerate", "25", "-t", "5", "-i", overlay_path,  # 1 - PNG overlay as looped 5s stream
+        "-i", audio_path,  # 2 - mixed audio
+        "-filter_complex", "[1:v] scale=iw*0.9:ih*0.9 [overlay]; [0:v][overlay] overlay=x=("
+                           "main_w-overlay_w)/2:y=80:enable='lte(t,5)':format=auto",
         "-map", "0:v", "-map", "2:a",
         "-c:v", "libx264",
-        "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p",  # ✅ Windows compatibility
+        "-preset", "ultrafast",#"slow",
         "-c:a", "aac",
         "-shortest",
         output_path
