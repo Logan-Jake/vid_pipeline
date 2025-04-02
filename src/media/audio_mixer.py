@@ -6,15 +6,15 @@ import math
 
 def mix_audio_tracks(voiceover_path: str, music_path: str, output_path: str):
     print("🎧 Mixing audio tracks...")
-    print(f"   - Voiceover: {voiceover_path}")
-    print(f"   - Music: {music_path}")
-    print(f"   - Output: {output_path}")
+    # print(f"   - Voiceover: {voiceover_path}")
+    # print(f"   - Music: {music_path}")
+    # print(f"   - Output: {output_path}")
 
     voiceover = AudioFileClip(voiceover_path)
     music = AudioFileClip(music_path)
 
-    print("   → voiceover duration:", voiceover.duration)
-    print("   → music duration:", music.duration)
+    # print("   → voiceover duration:", voiceover.duration)
+    # print("   → music duration:", music.duration)
 
     # 🔁 Loop music if it's shorter than voiceover
     if music.duration < voiceover.duration:
@@ -32,3 +32,8 @@ def mix_audio_tracks(voiceover_path: str, music_path: str, output_path: str):
 
     print(f"💾 Writing mixed audio to: {output_file}")
     mixed_audio.write_audiofile(str(output_file), fps=44100, codec='libmp3lame')
+
+    # 🧹 Prevent WinError 6
+    voiceover.close()
+    music.close()
+    mixed_audio.close()

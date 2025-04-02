@@ -81,7 +81,6 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
 
         except Exception as e:
             print("🚫 Failed to load profile pic:", e)
-    print('1')
     # Username + Blue Tick
     name_x = pfp_x + 80
     try:
@@ -91,7 +90,6 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
         print("🚫 Failed to draw username:", e)
         sys.stdout.flush()
 
-    print('2')
     # Blue tick
     tick_path = Path(__file__).parent.parent / "assets" / "blue_tick.png"
     if tick_path.exists():
