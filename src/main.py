@@ -5,7 +5,8 @@ from media.get_output_filename import get_next_video_filename
 from media.audio_mixer import mix_audio_tracks  # ⬅️ added mix_audio_tracks
 from media.footage_finder import get_random_background
 from media.music_fetcher import download_random_track  # ⬅️ needed for music
-from media.ffmpeg_pipeline import ffmpeg_compose_video  # ⬅️ new FFmpeg final step
+from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ⬅️ new ffmpeg final step
+from media.subtitle_generator import generate_subtitle_from_voiceover
 from pathlib import Path
 import os
 
@@ -42,6 +43,12 @@ if __name__ == "__main__":
     voice_path = generate_voiceover(story['text'] or story['title'])
     print(f"🎤 Voiceover saved to: {voice_path}")
 
+    # Generate subtitles from the voiceover using Whisper
+    subtitle_path = "output/subtitles.srt"
+    if not generate_subtitle_from_voiceover(voice_path, subtitle_path):
+        print("⚠️ Subtitle generation failed. Exiting...")
+        exit()
+
     # Select background + filename
     bg_path = get_random_background()
     filename = get_next_video_filename()
@@ -57,16 +64,17 @@ if __name__ == "__main__":
     print(" - Background video exists:", Path(bg_path).exists(), bg_path)
     print(" - Overlay graphic exists:", Path(graphic_path).exists(), graphic_path)
     print(" - Final audio exists:", Path(final_audio_path).exists(), final_audio_path)
+    print(" - Subtitles exist:", Path(subtitle_path).exists(), subtitle_path)
 
     # Step 2: Use FFmpeg to overlay graphic and add audio
     final_path = f"output/{filename}"
-    ffmpeg_compose_video(
+    ffmpeg_compose_video_with_subs(
         background_path=bg_path,
         overlay_path=graphic_path,
         audio_path=final_audio_path,
+        subtitles_path=subtitle_path,
         output_path=final_path
     )
-
 
     print(f"🎬 Final video saved to: {final_path}")
 
@@ -74,8 +82,7 @@ if __name__ == "__main__":
         os.remove(voice_path)
         os.remove(graphic_path)
         os.remove(final_audio_path)
+        os.remove(subtitle_path)
         print("🧹 Cleaned up temporary files.")
     except Exception as e:
         print("⚠️ Failed to delete some temporary files:", e)
-
-
