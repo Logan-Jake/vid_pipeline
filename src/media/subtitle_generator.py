@@ -1,7 +1,9 @@
 import whisper
 
+import sys
 import os
-os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(__file__), "model_cache")
+# Set TORCH_HOME to a directory inside your virtual environment
+os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
 
 voiceover_file = "output/final_audio.mp3"
 subtitle_file = "output/subtitles.srt"
@@ -16,7 +18,7 @@ def format_timestamp(seconds: float) -> str:
     milliseconds = int((seconds - int(seconds)) * 1000)
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{milliseconds:03d}"
 
-def generate_subtitle_from_voiceover(voiceover_path: str, subtitle_path: str, model_size: str = "medium"):
+def generate_subtitle_from_voiceover(voiceover_path: str, subtitle_path: str, model_size: str = "small"):
     """
     Transcribe the voiceover audio and write the transcription as an SRT file.
 

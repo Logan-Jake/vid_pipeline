@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Set TORCH_HOME to a directory inside your virtual environment
+os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
+
 from reddit.fetcher import fetch_top_story
 from media.tts import generate_voiceover
 from media.graphic_gen import generate_post_bubble
@@ -8,7 +14,8 @@ from media.music_fetcher import download_random_track  # ⬅️ needed for music
 from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ⬅️ new ffmpeg final step
 from media.subtitle_generator import generate_subtitle_from_voiceover
 from pathlib import Path
-import os
+
+
 
 if __name__ == "__main__":
     story = fetch_top_story()
@@ -47,7 +54,7 @@ if __name__ == "__main__":
     subtitle_path = "output/subtitles.srt"
     if not generate_subtitle_from_voiceover(voice_path, subtitle_path):
         print("⚠️ Subtitle generation failed. Exiting...")
-        exit()
+        # exit()
 
     # Select background + filename
     bg_path = get_random_background()
@@ -59,12 +66,6 @@ if __name__ == "__main__":
 
     # Step 1: Mix voiceover + music into MP3
     mix_audio_tracks(voice_path, music_path, final_audio_path)
-
-    print("🔍 Validating FFmpeg inputs:")
-    print(" - Background video exists:", Path(bg_path).exists(), bg_path)
-    print(" - Overlay graphic exists:", Path(graphic_path).exists(), graphic_path)
-    print(" - Final audio exists:", Path(final_audio_path).exists(), final_audio_path)
-    print(" - Subtitles exist:", Path(subtitle_path).exists(), subtitle_path)
 
     # Step 2: Use FFmpeg to overlay graphic and add audio
     final_path = f"output/{filename}"
