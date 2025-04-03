@@ -7,11 +7,11 @@ def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, su
     if not ffmpeg_path:
         raise FileNotFoundError("FFmpeg not found in PATH")
 
-    print("🔍 Validating FFmpeg inputs:")
-    print(" - Background video exists:", Path(background_path).exists(), background_path)
-    print(" - Overlay graphic exists:", Path(overlay_path).exists(), overlay_path)
-    print(" - Final audio exists:", Path(audio_path).exists(), audio_path)
-    print(" - Subtitles file exists:", Path(subtitles_path).exists(), subtitles_path)
+    # print("🔍 Validating FFmpeg inputs:")
+    # print(" - Background video exists:", Path(background_path).exists(), background_path)
+    # print(" - Overlay graphic exists:", Path(overlay_path).exists(), overlay_path)
+    # print(" - Final audio exists:", Path(audio_path).exists(), audio_path)
+    # print(" - Subtitles file exists:", Path(subtitles_path).exists(), subtitles_path)
 
     cmd = [
         ffmpeg_path,
@@ -35,7 +35,7 @@ def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, su
         output_path
     ]
 
-    print("🚀 FFmpeg command:")
-    print(" ".join(cmd))
+    # print("🚀 FFmpeg command:")
+    # print(" ".join(cmd))
 
     subprocess.run(cmd, check=True)
