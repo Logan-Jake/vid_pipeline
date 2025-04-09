@@ -23,7 +23,7 @@ def mix_audio_tracks(voiceover_path: str, music_path: str, output_path: str):
         music = concatenate_audioclips([music] * loops_required)
 
     # ✂️ Trim music to match voiceover
-    music = music.subclipped(0, voiceover.duration)#.with_volume(0.1)
+    music = music.subclipped(0, voiceover.duration).with_volume_scaled(0.3)
 
     mixed_audio = CompositeAudioClip([voiceover, music])
 
