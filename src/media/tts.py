@@ -1,9 +1,7 @@
 #NEEDS UPDATEING TO ELEVEN LABS
 import pyttsx3
-import os
 from pathlib import Path
 
-#NEEDS UPDATEING TO ELEVEN LABS
 def generate_voiceover(text: str, filename: str = "voiceover.wav") -> str:
     engine = pyttsx3.init()
     engine.setProperty("rate", 230)
@@ -16,4 +14,4 @@ def generate_voiceover(text: str, filename: str = "voiceover.wav") -> str:
     engine.runAndWait()
 
     print("Saved to:", output_path)
-    return str(output_path) ok
+    return str(output_path)

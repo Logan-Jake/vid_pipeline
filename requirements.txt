@@ -4,6 +4,8 @@ moviepy~=2.1.2
 requests~=2.32.3
 Pillow==10.2.0
 python-dotenv~=1.0.1
+elevenlabs==1.56.0
+openai-whisper==20240930
 
 
 # pip install -U openai-whisper
