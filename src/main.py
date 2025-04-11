@@ -5,7 +5,8 @@ import os
 os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
 
 from reddit.fetcher import fetch_top_story
-from media.tts import generate_voiceover
+# from media.tts import generate_voiceover
+from elevenlabs_tts import generate_voiceover
 from media.graphic_gen import generate_post_bubble
 from media.get_output_filename import get_next_video_filename
 from media.audio_mixer import mix_audio_tracks  # ⬅️ added mix_audio_tracks
