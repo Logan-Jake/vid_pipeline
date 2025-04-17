@@ -1,4 +1,4 @@
-#NEEDS UPDATEING TO ELEVEN LABS
+# REPLACED BY ELEVEN LABS
 import pyttsx3
 from pathlib import Path
 

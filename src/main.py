@@ -5,16 +5,16 @@ import os
 os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
 
 from reddit.fetcher import fetch_top_story
-# from media.tts import generate_voiceover
-from elevenlabs_tts import generate_voiceover
-from media.graphic_gen import generate_post_bubble
+# from media.tts import generate_voiceover # replaced by elevenlabs
+from media.elevenlabs_tts import generate_voiceover  # text to speech
+from media.graphic_gen import generate_post_bubble  # Generates graphic
 from media.get_output_filename import get_next_video_filename
-from media.audio_mixer import mix_audio_tracks  # ⬅️ added mix_audio_tracks
-from media.footage_finder import get_random_background
-from media.music_fetcher import download_random_track  # ⬅️ needed for music
-from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ⬅️ new ffmpeg final step
-from media.subtitle_generator import generate_subtitle_from_voiceover
-from pathlib import Path
+from media.audio_mixer import mix_audio_tracks  # added mix_audio_tracks
+from media.footage_fetcher import get_random_background  # Fetches background video, not working yet
+from media.music_fetcher import download_random_track  # needed for music, but doesn't work yet
+from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ffmpeg final step, builds the video
+#from media.whisper_subtitle_generator import generate_subtitle_from_voiceover #ran out of free credits
+from media.vosk_subtitle_generator import generate_subtitle_from_voiceover
 
 
 

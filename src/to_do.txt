@@ -1,0 +1,10 @@
+
+Most needed.
+- Make voiceover include story title
+- update ffmpeg_pipeline to loop music if voiceover is longer (currently ends mid story)
+- Improve graphic_gen as the trophies and other symbols are showing as blue squares
+
+
+Nice to have
+- get music_fetcher working to actually fetch music, this currenty fails to a local file
+- get footage_fetcher working, as it currently defaults to a local file

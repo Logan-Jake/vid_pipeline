@@ -21,15 +21,14 @@ def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, su
         "-i", audio_path,  # Input 2: Audio
         "-filter_complex",
         (
-                "[1:v] scale=iw*0.9:ih*0.9 [overlay]; "
-                "[0:v][overlay] overlay=x=(main_w-overlay_w)/2:y=80:enable='lte(t,5)' [vid_with_overlay]; "
-                "[vid_with_overlay] subtitles=" + subtitles_path + " [video_out]; "
-                "[2:a] volume=1 [aud]" # 👈 reduce audio volume to 30%
+            "[1:v] scale=iw*0.9:ih*0.9 [overlay]; "  # Scale the overlay image
+            "[0:v][overlay] overlay=x=(main_w-overlay_w)/2:y=80:enable='lte(t,5)' [vid_with_overlay]; "  # Composite overlay onto background
+            "[vid_with_overlay] subtitles=" + subtitles_path + " [video_out]"  # Burn in subtitles
         ),
         "-map", "[video_out]",  # Map the final video (with subtitles)
-        "-map", "[aud]",  # 👈 Map the filtered audio
+        "-map", "2:a",          # Map the audio
         "-c:v", "libx264",
-        "-pix_fmt", "yuv420p",
+        "-pix_fmt", "yuv420p",  # For Windows compatibility
         "-preset", "ultrafast",
         "-c:a", "aac",
         "-shortest",
