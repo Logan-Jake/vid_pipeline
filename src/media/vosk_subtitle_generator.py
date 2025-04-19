@@ -7,6 +7,7 @@ from vosk import Model, KaldiRecognizer
 
 # Path to your Vosk model directory (download from https://alphacephei.com/vosk/models)
 VOSK_MODEL_PATH = os.environ.get("VOSK_MODEL_PATH", "models/vosk-model-small-en-us-0.15")
+print(VOSK_MODEL_PATH)
 # Maximum words per subtitle chunk and wrap width
 MAX_WORDS = 7
 WRAP_WIDTH = 40

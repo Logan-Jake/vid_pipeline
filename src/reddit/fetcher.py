@@ -2,7 +2,7 @@ import praw
 import requests
 from utils import config
 
-def fetch_top_story(subreddit="AmItheAsshole", min_upvotes=100, min_length=300, max_length=500):
+def fetch_top_story(subreddit="AmItheAsshole", min_upvotes=100, min_length=10, max_length=200):
     reddit = praw.Reddit(
         client_id=config.REDDIT_CLIENT_ID,
         client_secret=config.REDDIT_CLIENT_SECRET,
@@ -45,7 +45,7 @@ def fetch_top_story(subreddit="AmItheAsshole", min_upvotes=100, min_length=300, 
 
         return {
             "title": submission.title,
-            "text": story_text,
+            "text": submission.title + ', ' + story_text,
             "author": author_name,
             "score": submission.score,
             "profile_pic_url": profile_pic_url,

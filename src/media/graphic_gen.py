@@ -12,7 +12,7 @@ def clean_text(text):
 def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], filename="reddit_bubble.png"):
     title = clean_text(title)
     author = clean_text(author)
-    WIDTH, HEIGHT = 1080, 400
+    WIDTH, HEIGHT = 1080, 360
     BG_COLOUR = (255, 255, 255, 230)
     TEXT_COLOUR = (0, 0, 0)
     ACCENT = (0, 121, 211)
@@ -29,10 +29,9 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
             print(f"⚠️ Font fallback: {font_name} failed ({e}), using default.")
             return ImageFont.load_default()
 
-    font_user = safe_font("arial.ttf", 36)
-    font_title = safe_font("arial.ttf", 48)
-    font_meta = safe_font("arial.ttf", 28)
-
+    font_user = safe_font("arial.ttf", 32)
+    font_title = safe_font("arial.ttf", 56)  # bolder, larger headline
+    font_meta = safe_font("arial.ttf", 24)  # slimmer meta row
     # Rounded rectangle background
     radius = 40
     draw.rounded_rectangle([0, 0, WIDTH, HEIGHT], radius=radius, fill=BG_COLOUR)
@@ -119,13 +118,52 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
         except Exception as e:
             print(f"⚠️ Failed to load award icon: {e}")
 
-    # Likes / Comments / Shares
-    meta_text = "❤️ 999+    💬 999+    🔁 999+"
+    # Likes / Comments
+    meta_text = "❤️ 99+    💬 99+"
     draw.text((40, HEIGHT - 50), meta_text, fill=TEXT_COLOUR, font=font_meta)
 
-    # Audio bar (optional)
-    draw.text((WIDTH - 180, 40), "🔊 ▂▃▄▅▆▇", fill=ACCENT, font=font_meta)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
     return output_path.as_posix()
+
+
+import sys
+import os
+
+# Set TORCH_HOME to a directory inside your virtual environment
+os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
+
+from reddit.fetcher import fetch_top_story
+from media.graphic_gen import generate_post_bubble  # Generates graphic
+
+
+if __name__ == "__main__":
+    story = fetch_top_story()
+
+    if not story:
+        print("No suitable story found.")
+        exit()
+
+    print("🎉 Story Fetched:")
+    print(f"Title: {story['title']}")
+    print(f"By: u/{story['author']} ({story['score']} upvotes)")
+    print("-----")
+    print(story['text'])
+    print("🖼 Profile Pic URL:", story['profile_pic_url'])
+
+    try:
+        # Generate graphic
+        graphic_path = generate_post_bubble(
+            title=story['title'],
+            author=story['author'],
+            score=story['score'],
+            profile_pic_url=story['profile_pic_url'],
+            awards=story['awards']
+        )
+        print(f"🖼 Graphic saved to: {graphic_path}")
+    except Exception as e:
+        print("❌ Error generating graphic:")
+        import traceback
+
+        traceback.print_exc()
