@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from pathlib import Path
 import textwrap
 import requests
@@ -12,10 +12,12 @@ def clean_text(text):
 def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], filename="reddit_bubble.png"):
     title = clean_text(title)
     author = clean_text(author)
-    WIDTH, HEIGHT = 1080, 360
+    WIDTH, HEIGHT = 1080, 400
+    MARGIN = 40
     BG_COLOUR = (255, 255, 255, 230)
     TEXT_COLOUR = (0, 0, 0)
     ACCENT = (0, 121, 211)
+
 
     output_path = Path("output") / filename
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
@@ -29,9 +31,10 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
             print(f"⚠️ Font fallback: {font_name} failed ({e}), using default.")
             return ImageFont.load_default()
 
-    font_user = safe_font("arial.ttf", 32)
-    font_title = safe_font("arial.ttf", 56)  # bolder, larger headline
-    font_meta = safe_font("arial.ttf", 24)  # slimmer meta row
+    font_user = safe_font("arial.ttf", 36)
+    font_title = safe_font("arial.ttf", 48)
+    font_meta = safe_font("arial.ttf", 28)
+
     # Rounded rectangle background
     radius = 40
     draw.rounded_rectangle([0, 0, WIDTH, HEIGHT], radius=radius, fill=BG_COLOUR)
@@ -98,6 +101,15 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
     else:
         print("⚠️ Blue tick icon missing:", tick_path)
 
+    # awards
+    # awards_path = Path(__file__).parent.parent / "assets" / "blue_tick.png"
+    # if tick_path.exists():
+    #     tick_icon = Image.open(tick_path).resize((24, 24)).convert("RGBA")
+    #    tick_x = name_x + len(author) * 26 + 16
+    #    img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
+    # else:
+    #     print("⚠️ Blue tick icon missing:", tick_path)
+
     # Title text (wrapped)
     wrapped = textwrap.fill(title, width=40)
     draw.text((40, 120), wrapped, fill=TEXT_COLOUR, font=font_title)
@@ -118,10 +130,30 @@ def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], 
         except Exception as e:
             print(f"⚠️ Failed to load award icon: {e}")
 
-    # Likes / Comments
-    meta_text = "❤️ 99+    💬 99+"
-    draw.text((40, HEIGHT - 50), meta_text, fill=TEXT_COLOUR, font=font_meta)
+    # Likes / Comments / Shares
+    # meta_text = "❤️ 99+    💬 99+"
+    # draw.text((40, HEIGHT - 50), meta_text, fill=TEXT_COLOUR, font=font_meta)
 
+
+    # Meta: use image icons for upvote, downvote, comment, share
+    meta_icons = {
+        'up': Path(__file__).parent.parent / "assets" / 'upvote.png',
+        'down': Path(__file__).parent.parent / "assets" / 'downvote.png',
+        'comment': Path(__file__).parent.parent / "assets" / 'comment.png',
+        'share': Path(__file__).parent.parent / "assets" / 'assets' / 'share.png'
+    }
+    counts = [str(score or 0), '', '35.9k', '']  # leave empty strings for vote arrows
+    keys = ['up', 'down', 'comment', 'share']
+    mx = 0
+    my = HEIGHT - MARGIN * 1.2
+    for key, cnt in zip(keys, counts):
+        ico_path = meta_icons.get(key)
+        if ico_path and ico_path.exists():
+            ico = Image.open(ico_path).resize((24,24)).convert('RGBA')
+            img.paste(ico, (int(mx), int(my-18)), ico)
+        if cnt:
+            draw.text((mx+32, my-4), cnt, font=font_meta, fill=TEXT_COLOUR)
+        mx += 90  # tighter spacing
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)
