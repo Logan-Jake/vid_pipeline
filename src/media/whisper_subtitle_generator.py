@@ -32,7 +32,11 @@ def generate_subtitle_from_voiceover(voiceover_path: str, subtitle_path: str, mo
     """
     # Load model and transcribe
     model = whisper.load_model(model_size)
-    result = model.transcribe(voiceover_path)
+    result = model.transcribe(
+        voiceover_path,
+        word_timestamps=True,
+        verbose=False
+    )
     segments = result.get("segments", [])
     if not segments:
         print("No transcription segments found.")

@@ -12,10 +12,8 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-
 def clean_text(text):
     return ''.join(c for c in text if unicodedata.category(c)[0] != "C")
-
 
 def safe_font(font_name, size):
     try:
@@ -23,7 +21,6 @@ def safe_font(font_name, size):
     except Exception as e:
         logging.warning(f"Could not load '{font_name}' @ {size}px: {e}. Using default.")
         return ImageFont.load_default()
-
 
 def generate_post_bubble(image_path, title, output_path=None):
     # Loads reddit_card PNG, draws the title to fill & centre the available area,
@@ -45,7 +42,15 @@ def generate_post_bubble(image_path, title, output_path=None):
     W, H = img.size
     text_colour = (0, 0, 0, 255)
 
+    # — Hard-coded styling options —
+    CORNER_RADIUS = 40 # pixels for rounded corners
+    CROP_TO_MASK = False  # whether to auto-crop to rounded mask
+    CROP_LEFT = 110
+    CROP_TOP = 40
+    CROP_RIGHT = 110
+    CROP_BOTTOM = 40
     M_L, M_T, M_R, M_B = 20, 180, 20, 130
+
     inner_w = W - M_L - M_R
     inner_h = H - M_T - M_B
 
@@ -87,6 +92,22 @@ def generate_post_bubble(image_path, title, output_path=None):
     except Exception as e:
         raise RuntimeError(f"Failed while drawing text: {e}")
 
+    # apply manual crop
+    w, h = img.size
+    img = img.crop((CROP_LEFT, CROP_TOP, w - CROP_RIGHT, h - CROP_BOTTOM))
+
+    # apply rounded-corner mask
+    if CORNER_RADIUS > 0:
+        mask = Image.new("L", img.size, 0)
+        draw_mask = ImageDraw.Draw(mask)
+        draw_mask.rounded_rectangle([(0,0), img.size], radius=CORNER_RADIUS, fill=255)
+        rounded = Image.new("RGBA", img.size)
+        rounded.paste(img, (0,0), mask=mask)
+        img = rounded
+        if CROP_TO_MASK:
+            bbox = mask.getbbox()
+            img = img.crop(bbox)
+
     # — decide output filename —
     if output_path:
         out = Path(output_path)
@@ -102,8 +123,8 @@ def generate_post_bubble(image_path, title, output_path=None):
     return str(out)
 
 
-# from reddit.fetcher import fetch_top_story
-#
+from reddit.fetcher import fetch_top_story
+
 # if __name__ == "__main__":
 #     story = fetch_top_story()
 #

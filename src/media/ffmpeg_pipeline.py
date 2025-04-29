@@ -22,7 +22,8 @@ def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, su
         "-filter_complex",
         (
             "[1:v] scale=iw*0.9:ih*0.9 [overlay]; "  # Scale the overlay image
-            "[0:v][overlay] overlay=x=(main_w-overlay_w)/2:y=80:enable='lte(t,5)' [vid_with_overlay]; "  # Composite overlay onto background
+            "[0:v][overlay] overlay=x=(main_w-overlay_w)/2:y=(main_h-overlay_h)/2:enable='lte(t,5)' [vid_with_overlay]; "
+            #"[0:v][overlay] overlay=x=(main_w-overlay_w)/2:y=80:enable='lte(t,5)' [vid_with_overlay]; "  # Composite overlay onto background
             "[vid_with_overlay] subtitles=" + subtitles_path + " [video_out]"  # Burn in subtitles
         ),
         "-map", "[video_out]",  # Map the final video (with subtitles)
