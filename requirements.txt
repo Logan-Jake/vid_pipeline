@@ -1,4 +1,4 @@
-praw~=7.8.1
+praw==7.8.1
 pyttsx3~=2.98
 moviepy~=2.1.2
 requests~=2.32.3
@@ -7,6 +7,7 @@ python-dotenv~=1.0.1
 elevenlabs==1.56.0
 #openai-whisper==20240930
 vosk~=0.3.45
+pysubs2==1.8.0
 
 
 

@@ -7,7 +7,7 @@ import os
 os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
 
 # Maximum words per subtitle chunk and wrap width
-MAX_WORDS = 7
+MAX_WORDS = 4
 WRAP_WIDTH = 40
 
 

@@ -1,201 +1,132 @@
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from pathlib import Path
-import textwrap
-import requests
-from io import BytesIO
-import unicodedata
+import logging
 import sys
+from pathlib import Path
+import unicodedata
+import textwrap
+from PIL import Image, ImageDraw, ImageFont
+
+# set up basic logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 
 def clean_text(text):
-    return ''.join(c for c in text if unicodedata.category(c)[0] != 'C')
-def generate_post_bubble(title, author, score, profile_pic_url=None, awards=[], filename="reddit_bubble.png"):
+    return ''.join(c for c in text if unicodedata.category(c)[0] != "C")
+
+
+def safe_font(font_name, size):
+    try:
+        return ImageFont.truetype(font_name, size)
+    except Exception as e:
+        logging.warning(f"Could not load '{font_name}' @ {size}px: {e}. Using default.")
+        return ImageFont.load_default()
+
+
+def generate_post_bubble(image_path, title, output_path=None):
+    # Loads reddit_card PNG, draws the title to fill & centre the available area,
+    # then saves as `titled_<original>.png` (or to output_path if given).
+
+    image_path = Path(image_path)
+    if not image_path.is_file():
+        raise FileNotFoundError(f"Bubble image not found at: {image_path}")
+
     title = clean_text(title)
-    author = clean_text(author)
-    WIDTH, HEIGHT = 1080, 400
-    MARGIN = 40
-    BG_COLOUR = (255, 255, 255, 230)
-    TEXT_COLOUR = (0, 0, 0)
-    ACCENT = (0, 121, 211)
 
+    # open & convert
+    try:
+        img = Image.open(image_path).convert("RGBA")
+    except Exception as e:
+        raise RuntimeError(f"Failed to open/convert image '{image_path}': {e}")
 
-    output_path = Path("output") / filename
-    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
+    W, H = img.size
+    text_colour = (0, 0, 0, 255)
 
-    # Fonts
-    def safe_font(font_name, size):
-        try:
-            return ImageFont.truetype(font_name, size)
-        except Exception as e:
-            print(f"⚠️ Font fallback: {font_name} failed ({e}), using default.")
-            return ImageFont.load_default()
+    M_L, M_T, M_R, M_B = 20, 180, 20, 130
+    inner_w = W - M_L - M_R
+    inner_h = H - M_T - M_B
 
-    font_user = safe_font("arial.ttf", 36)
-    font_title = safe_font("arial.ttf", 48)
-    font_meta = safe_font("arial.ttf", 28)
+    # — choose font size that fits —
+    font = None
+    wrapped = None
+    for size in range(200, 10, -2):
+        f = safe_font("arial.ttf", size)
+        x0, y0, x1, y1 = draw.textbbox((0, 0), "A", font=f)
+        avg_w = x1 - x0
+        chars_per_line = max(1, inner_w // avg_w)
+        lines = textwrap.wrap(title, width=chars_per_line)
+        candidate = "\n".join(lines)
+        bbox = draw.multiline_textbbox((0, 0), candidate, font=f)
+        w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        if w <= inner_w and h <= inner_h:
+            font, wrapped = f, candidate
+            break
 
-    # Rounded rectangle background
-    radius = 40
-    draw.rounded_rectangle([0, 0, WIDTH, HEIGHT], radius=radius, fill=BG_COLOUR)
+    # — fallback font if none found —
+    if font is None:
+        font = safe_font("arial.ttf", 16)
+        x0, y0, x1, y1 = draw.textbbox((0, 0), "A", font=font)
+        char_w = x1 - x0
+        chars_per_line = max(1, inner_w // char_w)
+        wrapped = textwrap.fill(title, width=chars_per_line)
 
-    def round_image(img, radius):
-        mask = Image.new("L", img.size, 0)
-        draw = ImageDraw.Draw(mask)
-        draw.rounded_rectangle([0, 0, img.size[0], img.size[1]], radius=radius, fill=255)
-        rounded = Image.new("RGBA", img.size)
-        rounded.paste(img, (0, 0), mask=mask)
-        return rounded
+    # measure text
+    bbox = draw.multiline_textbbox((0, 0), wrapped, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-    # Profile Picture
-    pfp_x, pfp_y = 40, 30
-    if profile_pic_url:
-        try:
-            headers = {"User-Agent": "vid_pipeline (by u/your_username)"}
-            response = requests.get(profile_pic_url, headers=headers, timeout=5)
-            response.raise_for_status()
+    # centre within the inset area
+    x = M_L + (inner_w - tw) // 2
+    y = M_T + (inner_h - th) // 2
 
-            print("🔽 Downloading profile picture:", profile_pic_url)
-            print("📦 Content-Length:", len(response.content))
-            print("📄 Content-Type:", response.headers.get("Content-Type"))
-
-            content_type = response.headers.get("Content-Type", "")
-            if "image" in content_type:
-                #pfp = Image.open(BytesIO(response.content)).resize((64, 64)).convert("RGBA")
-                try:
-                    image_data = BytesIO(response.content)
-                    test_img = Image.open(image_data)
-                    test_img.verify()  # Validate
-                    image_data.seek(0)  # Rewind for actual use
-
-                    pfp = Image.open(image_data).convert("RGBA").resize((64, 64))
-
-                    rounded_pfp = round_image(pfp, radius=60)
-                    img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
-
-                except Exception as e:
-                    print("🚫 Failed to load profile pic (safe mode):", e)
-
-                # rounded_pfp = round_image(pfp, radius=60)
-                # img.paste(rounded_pfp, (pfp_x, pfp_y), mask=rounded_pfp)
-            else:
-                print("⚠️ Profile URL didn't return an image:", content_type)
-
-        except Exception as e:
-            print("🚫 Failed to load profile pic:", e)
-    # Username + Blue Tick
-    name_x = pfp_x + 80
+    # — draw text —
     try:
-        draw.text((name_x, pfp_y + 10), f"u/{author}", fill=ACCENT, font=font_user)
-        print("✅ Username drawn")
+        draw.multiline_text((x, y), wrapped, fill=text_colour, font=font, align="center")
     except Exception as e:
-        print("🚫 Failed to draw username:", e)
-        sys.stdout.flush()
+        raise RuntimeError(f"Failed while drawing text: {e}")
 
-    # Blue tick
-    tick_path = Path(__file__).parent.parent / "assets" / "blue_tick.png"
-    if tick_path.exists():
-        tick_icon = Image.open(tick_path).resize((24, 24)).convert("RGBA")
-        tick_x = name_x + len(author) * 18 + 16
-        img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
+    # — decide output filename —
+    if output_path:
+        out = Path(output_path)
     else:
-        print("⚠️ Blue tick icon missing:", tick_path)
+        out = image_path.with_name(f"titled_{image_path.name}")
 
-    # awards
-    # awards_path = Path(__file__).parent.parent / "assets" / "blue_tick.png"
-    # if tick_path.exists():
-    #     tick_icon = Image.open(tick_path).resize((24, 24)).convert("RGBA")
-    #    tick_x = name_x + len(author) * 26 + 16
-    #    img.paste(tick_icon, (tick_x, pfp_y + 12), mask=tick_icon)
-    # else:
-    #     print("⚠️ Blue tick icon missing:", tick_path)
-
-    # Title text (wrapped)
-    wrapped = textwrap.fill(title, width=40)
-    draw.text((40, 120), wrapped, fill=TEXT_COLOUR, font=font_title)
-
-    # Awards
-    x = 40
-    y = HEIGHT - 100
-    for award in awards[:5]:
-        try:
-            icon_url = award.get("icon_url")
-            if not icon_url:
-                continue
-            r = requests.get(icon_url)
-            r.raise_for_status()
-            icon = Image.open(BytesIO(r.content)).resize((48, 48)).convert("RGBA")
-            img.paste(icon, (x, y), mask=icon)
-            x += 56
-        except Exception as e:
-            print(f"⚠️ Failed to load award icon: {e}")
-
-    # Likes / Comments / Shares
-    # meta_text = "❤️ 99+    💬 99+"
-    # draw.text((40, HEIGHT - 50), meta_text, fill=TEXT_COLOUR, font=font_meta)
-
-
-    # Meta: use image icons for upvote, downvote, comment, share
-    meta_icons = {
-        'up': Path(__file__).parent.parent / "assets" / 'upvote.png',
-        'down': Path(__file__).parent.parent / "assets" / 'downvote.png',
-        'comment': Path(__file__).parent.parent / "assets" / 'comment.png',
-        'share': Path(__file__).parent.parent / "assets" / 'assets' / 'share.png'
-    }
-    counts = [str(score or 0), '', '35.9k', '']  # leave empty strings for vote arrows
-    keys = ['up', 'down', 'comment', 'share']
-    mx = 0
-    my = HEIGHT - MARGIN * 1.2
-    for key, cnt in zip(keys, counts):
-        ico_path = meta_icons.get(key)
-        if ico_path and ico_path.exists():
-            ico = Image.open(ico_path).resize((24,24)).convert('RGBA')
-            img.paste(ico, (int(mx), int(my-18)), ico)
-        if cnt:
-            draw.text((mx+32, my-4), cnt, font=font_meta, fill=TEXT_COLOUR)
-        mx += 90  # tighter spacing
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    img.save(output_path)
-    return output_path.as_posix()
-
-
-import sys
-import os
-
-# Set TORCH_HOME to a directory inside your virtual environment
-os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
-
-from reddit.fetcher import fetch_top_story
-from media.graphic_gen import generate_post_bubble  # Generates graphic
-
-
-if __name__ == "__main__":
-    story = fetch_top_story()
-
-    if not story:
-        print("No suitable story found.")
-        exit()
-
-    print("🎉 Story Fetched:")
-    print(f"Title: {story['title']}")
-    print(f"By: u/{story['author']} ({story['score']} upvotes)")
-    print("-----")
-    print(story['text'])
-    print("🖼 Profile Pic URL:", story['profile_pic_url'])
-
+    # — save —
     try:
-        # Generate graphic
-        graphic_path = generate_post_bubble(
-            title=story['title'],
-            author=story['author'],
-            score=story['score'],
-            profile_pic_url=story['profile_pic_url'],
-            awards=story['awards']
-        )
-        print(f"🖼 Graphic saved to: {graphic_path}")
+        img.save(out)
     except Exception as e:
-        print("❌ Error generating graphic:")
-        import traceback
+        raise RuntimeError(f"Could not save image to '{out}': {e}")
 
-        traceback.print_exc()
+    return str(out)
+
+
+# from reddit.fetcher import fetch_top_story
+#
+# if __name__ == "__main__":
+#     story = fetch_top_story()
+#
+#     if not story:
+#         print("No suitable story found.")
+#         exit()
+#
+#     print("🎉 Story Fetched:")
+#     print(f"Title: {story['title']}")
+#     print(f"By: u/{story['author']} ({story['score']} upvotes)")
+#     print("-----")
+#     print(story['text'])
+#     #print("🖼 Profile Pic URL:", story['profile_pic_url'])
+#
+#     bubble_template = Path(__file__).parent.parent / "assets" / "Reddit_card.png"  # ← set this to your local template
+#
+#     try:
+#         graphic_path = generate_post_bubble(
+#             image_path=bubble_template,
+#             title=story["title"],
+#             # output_path="out/my_titled_image.png"  # optionally override
+#         )
+#         logging.info(f"🖼  Graphic saved to: {graphic_path}")
+#     except Exception as e:
+#         logging.error("❌ Error generating graphic", exc_info=True)
+#         sys.exit(1)
