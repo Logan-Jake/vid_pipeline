@@ -49,7 +49,7 @@ def generate_post_bubble(image_path, title, output_path=None):
     CROP_TOP = 40
     CROP_RIGHT = 110
     CROP_BOTTOM = 40
-    M_L, M_T, M_R, M_B = 20, 180, 20, 130
+    M_L, M_T, M_R, M_B = 10, 180, 10, 130  # padding for text from png edges
 
     inner_w = W - M_L - M_R
     inner_h = H - M_T - M_B

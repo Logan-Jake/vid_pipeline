@@ -15,8 +15,10 @@ from media.audio_mixer import mix_audio_tracks  # added mix_audio_tracks
 from media.footage_fetcher import get_random_background  # Fetches background video, not working yet
 from media.music_fetcher import download_random_track  # needed for music, but doesn't work yet
 from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ffmpeg final step, builds the video
-from media.whisper_subtitle_generator import generate_subtitle_from_voiceover
-#from media.vosk_subtitle_generator import generate_subtitle_from_voiceover
+# from media.whisper_subtitle_generator import generate_subtitle_from_voiceover
+# from media.vosk_subtitle_generator import generate_subtitle_from_voiceover
+from media.subtitle_processing import make_ass
+from moviepy.audio.io.AudioFileClip import AudioFileClip
 
 if __name__ == "__main__":
     story = fetch_top_story()
@@ -32,7 +34,7 @@ if __name__ == "__main__":
     print(story['text'])
     #print("🖼 Profile Pic URL:", story['profile_pic_url'])
 
-    bubble_template = Path(__file__).parent.parent / "src" / "assets" / "Reddit_card.png"  # ← set this to your local template
+    bubble_template = Path(__file__).parent.parent / "src" / "assets" / "Reddit_card.png"  # default graphic location
 
     try:
         graphic_path = generate_post_bubble(
@@ -40,16 +42,6 @@ if __name__ == "__main__":
             title=story["title"],
             # output_path="out/my_titled_image.png"  # optionally override
         )
-    # try:
-    #     # Generate graphic
-    #     graphic_path = generate_post_bubble(
-    #         title=story['title'],
-    #         image_path=Path(__file__).parent.parent / "assets" / "Reddit_card.png"
-    #         # author=story['author'],
-    #         # score=story['score'],
-    #         # profile_pic_url=story['profile_pic_url'],
-    #         # awards=story['awards']
-    #     )
         print(f"🖼 Graphic saved to: {graphic_path}")
     except Exception as e:
         print("❌ Error generating graphic:")
@@ -58,14 +50,22 @@ if __name__ == "__main__":
         traceback.print_exc()
 
     # Generate voiceover
+    title_path = generate_voiceover(story["title"], filename="title.wav")
+    story_path = generate_voiceover(story["text"], filename="story.wav")
     voice_path = generate_voiceover(story['text'] or story['title'])
     print(f"🎤 Voiceover saved to: {voice_path}")
 
     # Generate subtitles from the voiceover using Whisper
-    subtitle_path = "output/subtitles.srt"
-    if not generate_subtitle_from_voiceover(voice_path, subtitle_path):
-        print("⚠️ Subtitle generation failed. Exiting...")
+    # subtitle_path = "output/subtitles.srt"
+    # if not generate_subtitle_from_voiceover(voice_path, subtitle_path):
+    #     print("⚠️ Subtitle generation failed. Exiting...")
         # exit()
+
+    # Generate timed+positioned ASS file
+    ass_path = "output/highlight.ass"
+    title_duration = AudioFileClip(title_path).duration
+    make_ass(story_path, ass_path, delay=title_duration)
+    subtitle_path = ass_path  # feed ASS into ffmpeg
 
     # Select background + filename
     bg_path = get_random_background()
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     music_path = music_clip.filename if hasattr(music_clip, "filename") else music_clip
 
     # Step 1: Mix voiceover + music into MP3
-    mix_audio_tracks(voice_path, music_path, final_audio_path)
+    mix_audio_tracks([title_path, story_path], music_path, final_audio_path)
 
     # Step 2: Use FFmpeg to overlay graphic and add audio
     final_path = f"output/{filename}"
@@ -98,3 +98,4 @@ if __name__ == "__main__":
         print("🧹 Cleaned up temporary files.")
     except Exception as e:
         print("⚠️ Failed to delete some temporary files:", e)
+

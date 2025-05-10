@@ -1,8 +1,7 @@
 
 Most needed.
-- Make voiceover include story title
+- Make subtitles not include title
 - update ffmpeg_pipeline to loop music if voiceover is longer (currently ends mid story)
-- Improve graphic_gen as the trophies and other symbols are showing as blue squares
 
 
 Nice to have
