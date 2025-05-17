@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # Generate timed+positioned ASS file
     ass_path = "output/highlight.ass"
     title_duration = AudioFileClip(title_path).duration
-    make_ass(story_path, ass_path, delay=title_duration)
+    make_ass(story_path, ass_path, delay=title_duration + 0.4, max_words_per_line=3)
     subtitle_path = ass_path  # feed ASS into ffmpeg
 
     # Select background + filename
@@ -85,7 +85,8 @@ if __name__ == "__main__":
         overlay_path=graphic_path,
         audio_path=final_audio_path,
         subtitles_path=subtitle_path,
-        output_path=final_path
+        output_path=final_path,
+        title_duration=title_duration
     )
 
     print(f"🎬 Final video saved to: {final_path}")

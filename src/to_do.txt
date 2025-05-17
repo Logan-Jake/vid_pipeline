@@ -1,6 +1,6 @@
 
 Most needed.
-- Make subtitles not include title
+- use correct font
 - update ffmpeg_pipeline to loop music if voiceover is longer (currently ends mid story)
 
 

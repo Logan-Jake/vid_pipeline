@@ -4,7 +4,7 @@ from pathlib import Path
 
 def generate_voiceover(text: str, filename: str = "voiceover.wav") -> str:
     engine = pyttsx3.init()
-    engine.setProperty("rate", 230)
+    engine.setProperty("rate", 200)
     engine.setProperty("volume", 1.0)
 
     output_path = Path("output") / filename
