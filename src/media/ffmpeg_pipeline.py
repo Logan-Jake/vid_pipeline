@@ -1,18 +1,10 @@
 import subprocess
 import shutil
-import os
-from moviepy.audio.io.AudioFileClip import AudioFileClip
-from pathlib import Path
 
 def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, subtitles_path, output_path, title_duration):
     ffmpeg_path = shutil.which("ffmpeg")
     if not ffmpeg_path:
         raise FileNotFoundError("FFmpeg not found in PATH")
-
-    print(f"✅ Subtitle file found: {subtitles_path} ({os.path.getsize(subtitles_path)} bytes)")
-
-    fonts_dir = Path(__file__).resolve().parent / ".." / "assets" / "fonts"
-    fonts_dir = fonts_dir.resolve()
 
     cmd = [
         ffmpeg_path,
@@ -37,6 +29,5 @@ def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, su
 
         output_path
     ]
-
 
     subprocess.run(cmd, check=True)

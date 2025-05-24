@@ -3,20 +3,16 @@ import pysubs2
 from matplotlib import font_manager as fm
 from pathlib import Path
 
-
 # Get absolute path to the project root (assumes script is in src/media)
 project_root = Path(__file__).resolve().parents[1]
-print(project_root)
-font_path = project_root / "assets" / "fonts" / "ConcertOne-Regular.ttf"
-print(font_path)
-
+font_path = project_root / "assets" / "fonts" / "BarlowCondensed-Bold.ttf"
 font_props = fm.FontProperties(fname=str(font_path))
 font_name = font_props.get_name()
 
 
 
 def make_ass(input_audio, output_ass,
-             font="Concert One", size=64,
+             font=font_name, size=80,
              resolution=(1920, 1080),
              pos=(960, 540),
              delay=0.0,
@@ -34,8 +30,9 @@ def make_ass(input_audio, output_ass,
         fontsize=size,
         alignment=5,
         borderstyle=1,
-        outline=2
+        outline=5
     )
+    style.shadow = 1
     style.primary_colour = pysubs2.Color(255, 255, 0)  # Yellow
     style.outline_colour = pysubs2.Color(0, 0, 0)  # Black
     style.margin_v = 50
@@ -47,17 +44,21 @@ def make_ass(input_audio, output_ass,
             continue
 
         # Step over the transcript in chunks of 3-4 words
+
         i = 0
         while i < len(words):
             chunk = words[i:i + max_words_per_line]
-            if len(chunk) < 1:
-                break
 
+            # Determine when to end this chunk
+            if i + max_words_per_line < len(words):
+                chunk_end_time = words[i + max_words_per_line].start + delay
+            else:
+                chunk_end_time = chunk[-1].end + delay
+
+            # One subtitle event per word in the chunk
             for j, word in enumerate(chunk):
-                start = word.start + delay
-                end = word.end + delay
+                word_start = word.start + delay
 
-                # Highlight the j-th word in the chunk
                 line_parts = []
                 for k, w in enumerate(chunk):
                     if j == k:
@@ -68,8 +69,8 @@ def make_ass(input_audio, output_ass,
                 styled_text = f"{{\\pos({pos[0]},{pos[1]})}}" + " ".join(line_parts)
 
                 subs.append(pysubs2.SSAEvent(
-                    start=int(start * 1000),
-                    end=int(end * 1000),
+                    start=int(word_start * 1000),
+                    end=int(chunk_end_time * 1000),
                     style="Default",
                     text=styled_text
                 ))
