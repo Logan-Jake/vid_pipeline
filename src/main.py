@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # Generate timed+positioned ASS file
     ass_path = "output/highlight.ass"
     title_duration = AudioFileClip(title_path).duration
-    make_ass(story_path, ass_path, delay=title_duration + 0.4, max_words_per_line=3)
+    make_ass(story_path, ass_path, delay=title_duration + 0.4, max_words_per_line=1)
     subtitle_path = ass_path  # feed ASS into ffmpeg
 
     # Select background + filename
@@ -99,4 +99,3 @@ if __name__ == "__main__":
         print("🧹 Cleaned up temporary files.")
     except Exception as e:
         print("⚠️ Failed to delete some temporary files:", e)
-

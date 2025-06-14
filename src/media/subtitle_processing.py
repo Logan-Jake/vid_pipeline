@@ -5,18 +5,18 @@ from pathlib import Path
 
 # Get absolute path to the project root (assumes script is in src/media)
 project_root = Path(__file__).resolve().parents[1]
-font_path = project_root / "assets" / "fonts" / "BarlowCondensed-Bold.ttf"
+font_path = project_root / "assets" / "fonts" / "ConcertOne-Regular.ttf"  # "BarlowCondensed-Bold.ttf"
 font_props = fm.FontProperties(fname=str(font_path))
 font_name = font_props.get_name()
 
 
 
 def make_ass(input_audio, output_ass,
-             font=font_name, size=80,
+             font=font_name, size=84,
              resolution=(1920, 1080),
              pos=(960, 540),
-             delay=0.0,
-             max_words_per_line=4):
+             delay=-0.1,
+             max_words_per_line=1):
 
     model = WhisperModel("small", device="cpu", compute_type="int8")
     segments, _ = model.transcribe(input_audio, word_timestamps=True)
@@ -30,9 +30,9 @@ def make_ass(input_audio, output_ass,
         fontsize=size,
         alignment=5,
         borderstyle=1,
-        outline=5
+        outline=2
     )
-    style.shadow = 1
+    # style.shadow = 1
     style.primary_colour = pysubs2.Color(255, 255, 0)  # Yellow
     style.outline_colour = pysubs2.Color(0, 0, 0)  # Black
     style.margin_v = 50
@@ -62,7 +62,7 @@ def make_ass(input_audio, output_ass,
                 line_parts = []
                 for k, w in enumerate(chunk):
                     if j == k:
-                        line_parts.append(r"{\c&H00FFFF&\bord2\3c&H000000&}" + w.word)
+                        line_parts.append(r"{\c&H00BFFF&\bord3\3c&H000000&}" + w.word)
                     else:
                         line_parts.append(r"{\c&HFFFFFF&}" + w.word)
 
