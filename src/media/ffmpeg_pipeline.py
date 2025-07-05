@@ -23,7 +23,7 @@ def ffmpeg_compose_video_with_subs(background_path, overlay_path, audio_path, su
         "-map", "2:a",          # Map the audio
         "-c:v", "libx264",
         "-pix_fmt", "yuv420p",  # For Windows compatibility
-        "-preset", "slow",
+        "-preset", "fast",
         "-c:a", "aac",
         "-shortest",
 

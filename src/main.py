@@ -6,17 +6,14 @@ from pathlib import Path
 os.environ["TORCH_HOME"] = os.path.join(os.path.dirname(sys.executable), "whisper_cache")
 
 from reddit.fetcher import fetch_top_story
-from media.tts import generate_voiceover # replaced by elevenlabs
-# from media.elevenlabs_tts import generate_voiceover  # text to speech
-# from media.f5_tts import generate_voiceover  # text to speech
+# from media.tts import generate_voiceover # replaced by elevenlabs
+from media.elevenlabs_tts import generate_voiceover  # text to speech
 from media.graphic_gen import generate_post_bubble  # Generates graphic
 from media.get_output_filename import get_next_video_filename
 from media.audio_mixer import mix_audio_tracks  # added mix_audio_tracks
 from media.footage_fetcher import get_random_background  # Fetches background video, not working yet
-# from media.music_fetcher import download_random_track  # needed for music, but doesn't work yet
 from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ffmpeg final step, builds the video
 # from media.whisper_subtitle_generator import generate_subtitle_from_voiceover
-# from media.vosk_subtitle_generator import generate_subtitle_from_voiceover
 from media.subtitle_processing import make_ass
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from media.music_utils import get_random_music
@@ -56,16 +53,10 @@ if __name__ == "__main__":
     voice_path = generate_voiceover(story['text'] or story['title'])
     print(f"🎤 Voiceover saved to: {voice_path}")
 
-    # Generate subtitles from the voiceover using Whisper
-    # subtitle_path = "output/subtitles.srt"
-    # if not generate_subtitle_from_voiceover(voice_path, subtitle_path):
-    #     print("⚠️ Subtitle generation failed. Exiting...")
-        # exit()
-
     # Generate timed+positioned ASS file
     ass_path = "output/highlight.ass"
     title_duration = AudioFileClip(title_path).duration
-    make_ass(story_path, ass_path, delay=title_duration + 0.4, max_words_per_line=1)
+    make_ass(story_path, ass_path, delay=title_duration + 0.4, max_words_per_line=3)
     subtitle_path = ass_path  # feed ASS into ffmpeg
 
     # Select background + filename
@@ -98,6 +89,7 @@ if __name__ == "__main__":
         os.remove(graphic_path)
         os.remove(final_audio_path)
         os.remove(subtitle_path)
+        # os.remove()
         print("🧹 Cleaned up temporary files.")
     except Exception as e:
         print("⚠️ Failed to delete some temporary files:", e)
