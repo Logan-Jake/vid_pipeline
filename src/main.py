@@ -13,12 +13,12 @@ from media.graphic_gen import generate_post_bubble  # Generates graphic
 from media.get_output_filename import get_next_video_filename
 from media.audio_mixer import mix_audio_tracks  # added mix_audio_tracks
 from media.footage_fetcher import get_random_background  # Fetches background video, not working yet
-from media.music_fetcher import download_random_track  # needed for music, but doesn't work yet
 from media.ffmpeg_pipeline import ffmpeg_compose_video_with_subs  # ffmpeg final step, builds the video
 # from media.whisper_subtitle_generator import generate_subtitle_from_voiceover
 # from media.vosk_subtitle_generator import generate_subtitle_from_voiceover
 from media.subtitle_processing import make_ass
 from moviepy.audio.io.AudioFileClip import AudioFileClip
+from media.music_utils import get_random_music
 
 if __name__ == "__main__":
     story = fetch_top_story()
@@ -72,7 +72,8 @@ if __name__ == "__main__":
     filename = get_next_video_filename()
 
     final_audio_path = "output/final_audio.mp3"
-    music_clip = download_random_track()
+    # music_clip = download_random_track()
+    music_clip = get_random_music()
     music_path = music_clip.filename if hasattr(music_clip, "filename") else music_clip
 
     # Step 1: Mix voiceover + music into MP3
