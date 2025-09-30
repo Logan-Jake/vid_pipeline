@@ -11,7 +11,7 @@ def generate_voiceover(text: str,
     # Import api key
     api_key = config.elevenlabs_key
     chunk_size = 1024
-    voice_id = 'UgBBYS2sOqTuMpoF3BR0'  # Select the voice id to use
+    voice_id = 'GsjQ0ydx7QzhDLqInGtT'  # Female 'UgBBYS2sOqTuMpoF3BR0' Male # Select the voice id to use
     voice_model = 'eleven_multilingual_v2'
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"  # Construct the streaming endpoint URL for the given voice_id.
 

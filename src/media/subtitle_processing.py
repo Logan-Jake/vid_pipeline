@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Get absolute path to the project root (assumes script is in src/media)
 project_root = Path(__file__).resolve().parents[1]
-font_path = project_root / "assets" / "fonts" / "BarlowCondensed-Bold.ttf" # "ConcertOne-Regular.ttf"
+font_path = project_root / "assets" / "fonts" / "PoetsenOne-Regular.ttf"  # "BarlowCondensed-Bold.ttf" # "ConcertOne-Regular.ttf"
 font_props = fm.FontProperties(fname=str(font_path))
 font_name = font_props.get_name()
 
@@ -14,7 +14,7 @@ def make_ass(input_audio, output_ass,
              font=font_name, size=84,
              resolution=(1920, 1080),
              pos=(960, 540),
-             delay=-0.1,
+             delay=-0.3,
              max_words_per_line=4):
     model = WhisperModel("small", device="cpu", compute_type="int8")
     segments, _ = model.transcribe(input_audio, word_timestamps=True)
@@ -27,8 +27,8 @@ def make_ass(input_audio, output_ass,
         fontname=font,
         fontsize=size,
         alignment=5,
-        borderstyle=1,
-        outline=2
+        borderstyle=2,
+        outline=6
     )
     # style.shadow = 1
     style.primary_colour = pysubs2.Color(255, 255, 255)  # White (unhighlighted)
